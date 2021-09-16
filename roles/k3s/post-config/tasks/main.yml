@@ -6,20 +6,20 @@
 
 - name: Ensures kube config directory exists
   file:
-    path: ~{{ dev_user }}/.kube
+    path: ~{{ rpi_username }}/.kube
     state: directory
 
 - name: Copy config file to user home directory
   copy:
     src: /etc/rancher/k3s/k3s.yaml
-    dest: ~{{ dev_user }}/.kube/config
+    dest: ~{{ rpi_username }}/.kube/config
     remote_src: yes
-    owner: "{{ dev_user }}"
+    owner: "{{ rpi_username }}"
 
 - name : Change ownership of Kube directory
   file:
-    path: ~{{ dev_user }}/.kube
-    owner: "{{ dev_user }}"
+    path: ~{{ rpi_username }}/.kube
+    owner: "{{ rpi_username }}"
     group: "{{ dev_group }}"
     recurse: yes
 
@@ -32,7 +32,7 @@
 
 - name: Wait for worker nodes to come up
   become: yes
-  become_user: "{{ dev_user }}"
+  become_user: "{{ rpi_username }}"
   shell:
     cmd: |
       set -o pipefail
@@ -49,7 +49,7 @@
 
 - name: Set label on worker nodes
   become: yes
-  become_user: "{{ dev_user }}"
+  become_user: "{{ rpi_username }}"
   command: kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
   loop: "{{ groups['k3s_rpi_workers'] }}"
   loop_control:

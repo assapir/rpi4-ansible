@@ -1,101 +1,14 @@
 ---
-- hosts: k3s_rpi
-  roles:
-    - kewlfft.aur # AUR manager installed through ansible-galaxy
-  become: yes
+- name: Setup packages
+  hosts: k3s_rpi
+
   tasks:
-
-    - name: Update pacman cache
-      pacman:
-        update_cache: yes
-
-    - name: Install utility packages
-      pacman:
+    - name: Install extra packages from aur
+      kewlfft.aur.aur:
         name:
-          - man
-          - man-db
-          - bash-completion
-          - net-tools
-          - rsync
-          - bc
-          - zsh
-          - vim
-          - neovim
-          - tmux
-          - fzf
-          - lsd
-          - bat
-          - fd
-          - git
-          - tldr
-          - curl
-          - wget
-          - htop
-          - the_silver_searcher
-          - cowsay
-          - fortune-mod
-          - figlet
-          - lolcat
-          - zip
-          - unzip
-          - python3
-          - python-pip
-          - python-pylint
-          - i2c-tools
-        state: present
-
-    - name: Install AUR command
-      shell:
-        cmd: bash <(curl -s https://archibold.io/install/aur)
-        creates: /usr/bin/aur
-      args:
-        executable: /usr/bin/bash
-
-    - name: Install yay from AUR
-      aur: name=yay use=makepkg state=present
+          - yay
+          - oh-my-zsh-git
+          - raspi-config-git
+          - kubectl-bin
       become: yes
       become_user: aur_builder
-
-    - name: Install extra packages using yay
-      aur:
-        use: yay
-        name:
-          - boxes
-          - toilet
-          - toilet-fonts
-          - python-raspberry-gpio
-          - raspi-config
-      become: yes
-      become_user: aur_builder
-
-    - name: Install Python modules
-      pip:
-        name: wheel,pexpect,spidev,i2clcd,blinkt
-
-    - name: Install custom Python wheels
-      pip:
-        name:
-          - https://github.com/pnavais/python-lab/raw/master/wheel/RPi_I2C_driver-0.1.0-py38-none-any.whl
-          - https://github.com/pnavais/python-lab/raw/master/wheel/lcd_i2c-0.1.0-py38-none-any.whl
-
-    - name: Obtain additional figlet fonts
-      git:
-        repo: https://github.com/xero/figlet-fonts.git
-        dest: "/tmp/figlet-fonts/"
-        version: master
-        force: yes
-        update: yes
-
-    - name: Obtain figlet fonts directory
-      command: figlet -I2
-      register: figlet_font_dir
-      changed_when: False
-
-    - name: Install figlet fonts
-      shell: "mv /tmp/figlet-fonts/* {{ figlet_font_dir.stdout }}"
-      changed_when: False
-
-    - name: Remove temporary directory
-      file:
-        path: /tmp/figlet-fonts/
-        state: absent

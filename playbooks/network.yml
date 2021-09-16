@@ -1,11 +1,8 @@
 ---
-- hosts: k3s_rpi
+- name: Network configurations
+  hosts: k3s_rpi
   become: yes
   tasks:
-
-    - name: Set hostname
-      hostname:
-        name: "{{ inventory_hostname }}"
 
     - name: Configure local hostname
       template:
@@ -28,32 +25,17 @@
         enabled: yes
         state: started
 
-    - name: Configure static IP address
-      template:
-        src: "eth0.network.j2"
-        dest: "/etc/systemd/network/eth0.network"
-        owner: "root"
-        group: "root"
-        mode: 0644
-
-    - name: Disable DHCP service
+    - name: Enable & start systemd-resolved service
       systemd:
-          name: dhcpcd
-          state: stopped
-          enabled: no
+        name: systemd-resolved
+        enabled: yes
+        state: started
 
-    - name: Configure resolv file
-      template:
-        src: "resolv.conf.j2"
-        dest: "/etc/resolv.conf"
-        owner: "root"
-        group: "root"
-        mode: 0644
-
-    - name: Remove eth global configuration
-      file:
-        path: /etc/systemd/network/eth.network
-        state: absent
+    - name: Enable & start networkmanager service
+      systemd:
+        name: NetworkManager
+        enabled: yes
+        state: started
 
     - name: Restart network
       systemd:

@@ -1,5 +1,6 @@
 ---
-- hosts: k3s_rpi
+- name: Create users
+  hosts: k3s_rpi
   become: yes
   tasks:
 
@@ -27,37 +28,37 @@
       command: "raspi-config nonint do_i2c 0"
       when: i2c_disabled.stdout == "1"
 
-    - name: Add development user {{ dev_user }}
+    - name: Fix alarm user
       user:
-        name: "{{ dev_user }}"
+        name: "{{ rpi_username }}"
         password: "{{ dev_password }}"
         comment: "{{ dev_name }}"
-        groups: "{{ def_group }},{{ dev_group }},gpio,i2c,docker"
+        groups: "{{ def_group }},{{ dev_group }},gpio,i2c,docker,network"
+        shell: /bin/zsh
+
+    - name: Copy oh-my-zsh config
+      copy:
+        src: "/usr/share/oh-my-zsh/zshrc"
+        dest: "/home/{{ rpi_username }}/.zshrc"
+        owner: "{{ rpi_username }}"
+        group: "{{ rpi_username }}"
+        remote_src: yes
+
+    - name: Celete alarm shell
+      user:
+        name: alarm
+        shell: /bin/zsh
 
     - name: Change root password
       user:
         name: root
         password: "{{ root_password }}"
+        shell: /bin/zsh
 
-    - name: Create root bashrc
-      copy:
-        dest: ~/.bashrc
-        content: |
-          #!/bin/env/ bash
-          if [ -f ~/.bash_profile ]; then
-              source ~/.bash_profile
-          fi
-
-    - name: Set root bash_profile
-      copy:
-        dest: ~/.bash_profile
-        content: |
-          # Custom fancy prompt
-          export PS1=$'\[\e[36m\][\[\e[31m\]\u@\h:\[\e[33m\]\w\[\e[36m\]]$\[\e[39m\] '
 
     - name: Set authorized key for development user from current user
       authorized_key:
-        user: "{{ dev_user }}"
+        user: "{{ rpi_username }}"
         state: present
         key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
 
@@ -65,36 +66,6 @@
       file:
         path: "{{ dev_directory }}"
         state: directory
-        owner: "{{ dev_user }}"
+        owner: "{{ rpi_username }}"
         group: "{{ dev_group }}"
         mode: '0755'
-
-    - name: Retrieving dotfiles base directory
-      set_fact:
-        dotfiles_repo_target: "{{ dot_files_repo_url | basename | regex_replace('^(.+).git$','\\1') }}"
-
-    - name: Retrieving dotfiles target directory
-      set_fact:
-        dotfiles_dir: "{{ dev_directory }}/{{ dotfiles_repo_target }}"
-
-    - name: Clone dotfiles
-      git:
-        repo: '{{ dot_files_repo_url }}'
-        dest: "{{ dotfiles_dir }}"
-        version: "{{ dot_files_repo_version }}"
-        force: yes
-
-    - name: Set dotfiles permissions
-      file:
-        path: "{{ dotfiles_dir }}"
-        group: "{{ dev_group }}"
-        mode: '0775'
-        recurse: yes
-
-    - name: Create vi symbolic link
-      file:
-        src: /usr/bin/vim
-        dest: /usr/bin/vi
-        owner: root
-        group: root
-        state: link

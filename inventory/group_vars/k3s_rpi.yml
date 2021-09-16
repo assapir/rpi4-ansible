@@ -5,9 +5,6 @@
 ansible_python_interpreter: auto_silent
 
 k3s_releases_url: "https://api.github.com/repos/rancher/k3s/releases/latest"
-crictl_releases_url: "https://api.github.com/repos/kubernetes-sigs/cri-tools/releases/latest"
-kubectl_releases_url: "https://storage.googleapis.com/kubernetes-release/release/stable.txt"
-kubectl_download_base_url: "https://storage.googleapis.com/kubernetes-release/release"
 
 # Users and groups
 ##################
@@ -21,36 +18,20 @@ ansible_sudo_pass: "{{ rpi_username }}"
 
 # Defines the ansible user to use when connecting to devices
 ansible_user: "{{ rpi_username }}"
- 
-# Defines the ansible password to use when connecting to devices
-#ansible_password: "{{ rpi_password }}"
 
-dev_name: Pablo Navais
-dev_user: pnavais
-dev_password: $6$/agdOKJ$domD4feB6OQmVDbyjNTirbQtgeA647YlUT0tsBCMbV0/i3r0F8N5nvcdZtnS2TBWdQPg03otWdGTAUNCsEyrD/
+dev_name: Assaf Sapir
 dev_group: dev
 def_group: wheel
 dev_directory: /Projects
-dot_files_repo_url: http://github.com/pnavais/dotfiles.git
-dot_files_repo_version: master
+dev_password: $6$pMV0q3nKr8RwnL/d$sBHiDdO7SqsaBQZi.YFKgmX62kFx5XIegbHD2xTdfQL0SQU2H8NuRAXEjUkoh8cZwoFKcr5MB1UUvBzI8wkub/
 
-root_password: $6$b//6riQSO$BY3TuuZwpXd6mLFrHlycm0uJiB1X.6bFSLohUGcaGDIizLfYf45DtSAQSOGV/P/oRYX9Lwkql.aO7UpPNBPyy/
-
-# Hosts
-#######
-
-# Start range for rpi hosts
-rpi_host_start: 120
-
-# Name servers
-dns_primary: "8.8.8.8"
-dns_secondary: "8.8.4.4"
+root_password: $6$pMV0q3nKr8RwnL/d$sBHiDdO7SqsaBQZi.YFKgmX62kFx5XIegbHD2xTdfQL0SQU2H8NuRAXEjUkoh8cZwoFKcr5MB1UUvBzI8wkub/
 
 # System config
 ###############
 
 # Default timezone
-timezone: "Europe/Madrid"
+timezone: "Asia/Jerusalem"
 locale: "en_US.UTF-8"
 
 systemd_dir: /etc/systemd/system
@@ -60,7 +41,7 @@ systemd_dir: /etc/systemd/system
 
 master_name: "{{ groups['k3s_rpi_master'][0] }}"
 net_spec: "192.168.0"
-master_ip: "{{ net_spec }}.{{ rpi_host_start }}"
-#master_ip: "{{ hostvars[master_name].ansible_host }}"
-extra_server_args: "--bind-address {{ master_ip }}" # Use --docker to use Docker as container engine instead of containerd
+# master_ip: "{{ net_spec }}.{{ rpi_host_start }}"
+master_ip: "{{ hostvars[master_name].ansible_host }}"
+extra_server_args: "--bind-address {{ master_ip }} --disable trafik " # Use --docker to use Docker as container engine instead of containerd
 extra_agent_args: "" # Use --docker to use Docker as container engine instead of containerd

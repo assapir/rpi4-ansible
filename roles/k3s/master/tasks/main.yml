@@ -16,3 +16,8 @@
 - name: Store Master node-token
   set_fact:
     k3s_node_token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
+
+- name: Make sure k3s service is running on master
+  systemd:
+    state: started
+    name: k3s

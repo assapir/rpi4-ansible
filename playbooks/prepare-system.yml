@@ -1,37 +1,68 @@
 ---
-- hosts: k3s_rpi
+- name: Prepare system
+  hosts: k3s_rpi
+  gather_facts: no
   become: yes
-  tasks:
+  become_method: su
+  pre_tasks:
 
     - name: Initialize pacman keyring
-      command: pacman-key --init
-      changed_when: False
+      raw: pacman-key --init
 
     - name: Initial setup of master keys
-      command: pacman-key --populate archlinuxarm
-      changed_when: False
+      raw: pacman-key --populate archlinuxarm
 
+    - name: Install python if not there
+      raw: |
+        test -e /usr/bin/python || \
+        (pacman -Sy --noconfirm python python-simplejson)
+      register: output
+      changed_when: output.stdout|trim() != ""
+
+    - name: Config pacman 'ParallelDownloads'
+      lineinfile:
+        path: /etc/pacman.conf
+        regexp: '^#ParallelDownloads'
+        line: 'ParallelDownloads = 5'
+
+    - name: Config pacman 'Color'
+      lineinfile:
+        path: /etc/pacman.conf
+        regexp: '^#Color'
+        line: 'Color'
+
+  tasks:
     - name: Update and upgrade pacman packages
       pacman:
         update_cache: yes
         upgrade: yes
+      register: packages_updated
 
     - name: Install common packages
       pacman:
         name:
-          - base-devel
           - avahi
-          - nss-mdns
-          - net-tools
-          - inetutils
+          - base-devel
+          - crictl
+          - dialog
           - docker
-          - docker-compose
+          - git
+          - go
+          - htop
+          - networkmanager
+          - nss-mdns
+          - python
+          - python-pip
+          - python-simplejson
+          - sudo
+          - uboot-tools
+          - wget
         state: present
 
     - name: Generate locale {{ locale }}
       locale_gen:
-          name: "{{ locale }}"
-          state: present
+        name: "{{ locale }}"
+        state: present
 
     - name: Set system locale to {{ locale }}
       copy:
@@ -55,12 +86,6 @@
       command: timedatectl set-ntp true
       when: ntp_disabled.stdout is search("inactive")
 
-    - name: Enable & start docker service
-      systemd:
-        name: docker
-        enabled: yes
-        state: started
-
     - name: Create AUR builder user
       user:
         name: aur_builder
@@ -69,15 +94,16 @@
     - name: Add sudoers permissions to AUR builder
       lineinfile:
         path: /etc/sudoers.d/11-install-aur_builder
-        line: 'aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman'
+        line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman"
         create: yes
-        validate: 'visudo -cf %s'
+        validate: "visudo -cf %s"
 
-    - name: Disable audit messages during boot
-      replace:
-        path: /boot/cmdline.txt
-        regexp: '^root=(.+)(?<!audit=0)$'
-        replace: 'root=\1 audit=0'
+    - name: Fix sudo issues
+      lineinfile:
+        path: /etc/sudoers
+        regexp: '^# %wheel ALL=(ALL) NOPASSWD: ALL$'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: "visudo -cf %s"
 
     - name: Silence kernel messages
       copy:
@@ -94,3 +120,7 @@
       copy:
         src: rules/45-i2c.rules
         dest: /etc/udev/rules.d
+
+    - name: Rebooting
+      reboot:
+      when: packages_updated is changed
