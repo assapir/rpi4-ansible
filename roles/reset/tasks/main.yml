@@ -16,7 +16,4 @@
     name: "{{ item }}"
     state: absent
   with_items:
-    - /usr/local/bin/crictl
-    - /usr/local/bin/kubectl
-    - /etc/crictl.yaml
     - ~{{ rpi_username }}/.kube
