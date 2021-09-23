@@ -49,7 +49,6 @@
           - git
           - go
           - htop
-          - networkmanager
           - nss-mdns
           - python
           - python-pip
