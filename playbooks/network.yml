@@ -31,12 +31,6 @@
         enabled: yes
         state: started
 
-    - name: Enable & start networkmanager service
-      systemd:
-        name: NetworkManager
-        enabled: yes
-        state: started
-
     - name: Restart network
       systemd:
         name: systemd-networkd
