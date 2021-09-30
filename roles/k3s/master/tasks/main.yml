@@ -3,7 +3,7 @@
   shell:
     cmd: |
       set -o pipefail
-      curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='server {{ extra_server_args | default("") }}' sh -
+      curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL='latest' INSTALL_K3S_EXEC='server {{ extra_server_args | default("") }}' sh -
   args:
     executable: /bin/bash
   changed_when: False

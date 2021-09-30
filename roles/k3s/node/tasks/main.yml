@@ -1,9 +1,10 @@
 ---
 - name: Install / upgrade k3s on worker nodes and connect to master
-  shell: 
+  shell:
     cmd: |
       set -o pipefail
       curl -sfL https://get.k3s.io | \
+                INSTALL_K3S_CHANNEL='latest' \
                 K3S_URL=https://{{ master_ip }}:6443 \
                 K3S_TOKEN={{ hostvars[groups['k3s_rpi_master'][0]]['k3s_node_token'] }} \
                 INSTALL_K3S_EXEC='agent {{ extra_agent_args | default("") }}' sh -
