@@ -1,0 +1,9 @@
+---
+- name: yay -Syu
+  hosts: k3s_rpi
+  become: yes
+  become_user: aur_builder
+  tasks:
+  - name: Update packages
+    kewlfft.aur.aur:
+      upgrade: yes
