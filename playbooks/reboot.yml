@@ -1,0 +1,9 @@
+---
+- name: Reboot
+  hosts: k3s_rpi
+  gather_facts: no
+  become: yes
+
+  tasks:
+    - name: Rebooting
+      reboot:
