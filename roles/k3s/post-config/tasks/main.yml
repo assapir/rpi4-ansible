@@ -14,7 +14,14 @@
     src: /etc/rancher/k3s/k3s.yaml
     dest: ~{{ rpi_username }}/.kube/config
     remote_src: yes
+    mode: preserve
     owner: "{{ rpi_username }}"
+
+- name: Copy config file to host
+  fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: ~{{ rpi_username }}/.kube/config
+    flat: yes
 
 - name : Change ownership of Kube directory
   file:
