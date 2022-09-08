@@ -43,6 +43,7 @@
   shell:
     cmd: |
       set -o pipefail
+      export KUBECONFIG=~/.kube/config
       kubectl get nodes | grep {{ item }} | grep -i Ready | grep -iv NotReady | awk '{ print $1 }'
   args:
     executable: /bin/bash
@@ -57,7 +58,13 @@
 - name: Set label on worker nodes
   become: yes
   become_user: "{{ rpi_username }}"
-  command: kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
+  shell:
+    cmd: |
+      set -o pipefail
+      export KUBECONFIG=~/.kube/config
+      kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
+  args:
+    executable: /bin/bash
   loop: "{{ groups['k3s_rpi_workers'] }}"
   loop_control:
     index_var: node_idx
