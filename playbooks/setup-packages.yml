@@ -1,14 +1,49 @@
 ---
 - name: Setup packages
   hosts: k3s_rpi
+  become: yes
+  become_user: aur_builder
 
   tasks:
+    - name: Check if yay is already installed
+      command: "sh -c 'command -v yay'"
+      register: register_yay_available
+      ignore_errors: True
+      changed_when: False
+
+    - name: Install yay
+      when: register_yay_available.rc != 0
+      block:
+      - name: Create temporary build directory
+        register: register_yay_tempdir
+        tempfile:
+          state: directory
+          suffix: ansible
+
+      - name: Clone yay repository
+        git:
+          repo: 'https://aur.archlinux.org/yay.git'
+          dest: "{{ register_yay_tempdir.path }}"
+
+      - name: Install yay with makepkg
+        command:
+          chdir: "{{ register_yay_tempdir.path }}"
+          cmd: "makepkg -si --noconfirm"
+          creates: "/usr/bin/yay"
+
+      - name: Config yay
+        command:
+          cmd: yay -Y --devel --combinedupgrade --batchinstall --noeditmenu --nodiffmenu --cleanafter --save
+
     - name: Install extra packages from aur
-      kewlfft.aur.aur:
+      register: result
+      changed_when: result.packages is defined and (result.packages | length > 0)
+      community.general.pacman:
+        executable: "yay"
+        update_cache: yes
+        state: present
+        reason: explicit
+        reason_for: all
         name:
-          - yay
           - oh-my-zsh-git
           - raspi-config-git
-          - kubectl-bin
-      become: yes
-      become_user: aur_builder

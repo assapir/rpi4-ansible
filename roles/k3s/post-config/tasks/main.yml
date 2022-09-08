@@ -1,7 +1,7 @@
 ---
 - name: Add kubectl bash completions
   shell:
-    cmd: kubectl completion bash > /usr/share/bash-completion/completions/kubectl
+    cmd: k3s kubectl completion bash > /usr/share/bash-completion/completions/kubectl
     creates: /usr/share/bash-completion/completions/kubectl
 
 - name: Ensures kube config directory exists
@@ -44,7 +44,7 @@
     cmd: |
       set -o pipefail
       export KUBECONFIG=~/.kube/config
-      kubectl get nodes | grep {{ item }} | grep -i Ready | grep -iv NotReady | awk '{ print $1 }'
+      k3s kubectl get nodes | grep {{ item }} | grep -i Ready | grep -iv NotReady | awk '{ print $1 }'
   args:
     executable: /bin/bash
   register: node_ready
@@ -62,7 +62,7 @@
     cmd: |
       set -o pipefail
       export KUBECONFIG=~/.kube/config
-      kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
+      k3s kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
   args:
     executable: /bin/bash
   loop: "{{ groups['k3s_rpi_workers'] }}"

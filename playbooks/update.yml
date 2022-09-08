@@ -5,5 +5,9 @@
   become_user: aur_builder
   tasks:
   - name: Update packages
-    kewlfft.aur.aur:
+    register: result
+    changed_when: result.packages is defined and (result.packages | length > 0)
+    community.general.pacman:
+      executable: "yay"
       upgrade: yes
+      update_cache: yes
