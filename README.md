@@ -1,7 +1,9 @@
 # rpi4-ansible
-[![GitHub license](https://img.shields.io/github/license/pnavais/rpi4-ansible)](https://github.com/pnavais/rpi4-ansible/blob/master/LICENSE) <img src="https://img.shields.io/badge/stability-stable-green"/>
+[![GitHub license](https://img.shields.io/github/license/assapir/rpi4-ansible)](https://github.com/assapir/rpi4-ansible/blob/master/LICENSE)
+## **Forked from https://github.com/pnavais/rpi4-ansible**
 
-Ansible config &amp; playbooks for Raspberry Pi 4 K3S cluster
+
+### Ansible config &amp; playbooks for Raspberry Pi 4 K3S cluster
 
 ## Rationale
 This project contains Ansible playbooks allowing to provision from the ground up a K3S cluster of Raspberry Pi 4 based on ArchLinux ARM with both 64-bit Kernel and userland (see [rpi4-arch](https://github.com/assapir/rpi4-arch) for OS installation).
@@ -11,28 +13,27 @@ This project contains Ansible playbooks allowing to provision from the ground up
 ### Configure the cluster
 Modify the file inventory hosts file `inventory/hosts.ini` with the configuration (ip addresses/hosts) to suit your needs.
 
-The default configuration is based on 3 workers :
-```YAML
+The default configuration is based on 2 workers:
+```ini
 [k3s_rpi:children]
 k3s_rpi_master
 k3s_rpi_workers
 
 [k3s_rpi_master]
-master-pi ansible_host=192.168.0.120
+master-pi ansible_host=192.168.0.101
 
 [k3s_rpi_workers]
-worker-01 ansible_host=192.168.0.121
-worker-02 ansible_host=192.168.0.122
-worker-03 ansible_host=192.168.0.123
+worker-01 ansible_host=192.168.0.102
+worker-02 ansible_host=192.168.0.103
 ```
 
-To check everything is working fine execute :
+To check everything is working fine execute:
 
 ```shell
 ansible -m ping k3s_rpi
 ```
 
-Which should acknowledge something similar to :
+Which should acknowledge something similar to:
 ```shell
 3s-master | SUCCESS => {
     "ansible_facts": {
@@ -48,40 +49,32 @@ Modify the hosts configuration variables file `inventory/group_vars/k3s_rpi.yml`
 ### Pre-requirements
 Provided a sane environment with Python3/pip/Ansible already in place, install external roles from galaxy with :
 
-```
-ansible-galaxy install -r requirements.yml
+```bash
+> ansible-galaxy install -r requirements.yml
 ```
 
-### Execute the Preparation playbooks
+### Execute the playbook
 The following command with launch the provisioning playbooks :
 
-```
-ansible-playbook playbooks/main.yml
+```bash
+> ansible-playbook playbooks/main.yml --ask-become-pass
 ```
 
 which will execute in order:
-1. prepare-system : Performs basic ArchLinux customizations (NTP, GPIO/I2C rules, Yay...) and system packages installation (avahi, docker, ...)
-2. setup-packages : Installs auxiliary system packages (Pacman & AUR) and Python modules.
-3. setup-users : Create users & groups
-4. network : Setup network settings (hostname, static IP, MDNS, ...)
+1. prepare-system: Performs basic ArchLinux customizations (NTP, GPIO/I2C rules, Yay...) and system packages installation (avahi, docker, ...)
+2. setup-packages: Installs auxiliary system packages (Pacman & AUR) and Python modules.
+3. setup-users: Create users & groups
+4. network: Setup network settings (hostname, static IP, MDNS, ...)
+5. k3s-setup: Do all the hard work
 
-After successful execution the system will be ready for K3S setup.
-
-### Execute the K3S playbook
-In order to install and setup K3S in both master and worker hosts execute the following ansible playbook :
-
-```
-> ansible-playbook playbooks/k3s-setup.yml
-```
-
-After a couple of minutes, we should have a working Kubernetes cluster up and running :
+After a couple of minutes, we should have a working Kubernetes cluster up and running!
 
 ## Auxiliary utilities
 
 ### Shutting down the cluster
 Execute the following playbook :
 
-```
+```bash
 > ansible-playbook playbooks/shutdown.yml
 ```
 
@@ -90,7 +83,7 @@ The shutdown process will start with worker nodes and end up with the master hos
 ### Uninstalling K3S from the cluster
 Execute the following playbook :
 
-```
+```bash
 > ansible-playbook playbooks/k3s-reset.yml
 ```
 

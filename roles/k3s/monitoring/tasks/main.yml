@@ -1,0 +1,112 @@
+---
+- name: chmod 0600 kube config file
+  file:
+    path: "/home/{{ rpi_username }}/.kube/config"
+    mode: '0600'
+
+- name: Add jetstack repository
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: https://charts.jetstack.io
+
+- name: Install Cert-Manager
+  kubernetes.core.helm:
+    name: cert-manager
+    update_repo_cache: yes
+    release_namespace: cert-manager
+    create_namespace: yes
+    chart_ref: jetstack/cert-manager
+    values:
+      installCRDs: true
+      prometheus.servicemonitor.enabled: true
+
+- name: Create cluster issuer
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1alpha2
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-prod
+      spec:
+        acme:
+          email: me@ass.af
+          server: https://acme-v02.api.letsencrypt.org/directory
+          privateKeySecretRef:
+            name: letsencrypt-prod
+          solvers:
+            - http01:
+                ingress:
+                  class: traefik
+
+- name: Add Prometheus repository
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: https://prometheus-community.github.io/helm-charts
+
+- name: Install Prometheus
+  kubernetes.core.helm:
+    name: prometheus
+    update_repo_cache: yes
+    release_namespace: monitoring
+    create_namespace: yes
+    chart_ref: prometheus-community/prometheus
+    values:
+      alertmanager:
+        service:
+          type: LoadBalancer
+          servicePort: 3131
+
+
+- name: Add Grafana repository
+  kubernetes.core.helm_repository:
+    name: grafana
+    repo_url: https://grafana.github.io/helm-charts
+
+- name: Install Loki
+  kubernetes.core.helm:
+    name: loki
+    update_repo_cache: yes
+    release_namespace: logging
+    create_namespace: yes
+    chart_ref: grafana/loki-stack
+
+- name: Install Grafana
+  kubernetes.core.helm:
+    name: grafana
+    update_repo_cache: yes
+    release_namespace: monitoring
+    create_namespace: yes
+    chart_ref: grafana/grafana
+    values:
+      service:
+        type: LoadBalancer
+        port: 3000
+      persistence:
+        enabled: true
+        storageClassName: local-path
+      testFramework:
+        enabled: false
+      ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: traefik
+            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+          hosts:
+            - grafana.k3s.local
+            - k3s.ass.af
+          tls:
+            - hosts:
+                - grafana.k3s.local
+                - k3s.ass.af
+              secretName: grafana-tls
+      dashboards:
+        default:
+          prometheus-stats:
+            gnetId: 2
+            revision: 2
+            datasource: Prometheus
+          kubernetes-cluster:
+            gnetId: 7249
+            revision: 1
+            datasource: Prometheus

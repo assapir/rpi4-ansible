@@ -43,7 +43,6 @@
         name:
           - avahi
           - base-devel
-          - crictl
           - dialog
           - docker
           - git
@@ -123,3 +122,11 @@
     - name: Rebooting
       reboot:
       when: packages_updated is changed
+
+- name: Prerequisites
+  hosts: k3s_rpi
+  gather_facts: yes
+  become: yes
+  roles:
+    - role: prereq
+    - role: arch
