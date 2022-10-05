@@ -62,7 +62,7 @@
     cmd: |
       set -o pipefail
       export KUBECONFIG=~/.kube/config
-      k3s kubectl label node {{ item }} node-role.kubernetes.io/worker=worker --overwrite
+      k3s kubectl label node {{ item }} node-role.kubernetes.io/worker=worker
   args:
     executable: /bin/bash
   loop: "{{ groups['k3s_rpi_workers'] }}"

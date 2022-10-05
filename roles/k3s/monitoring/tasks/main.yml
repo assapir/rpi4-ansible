@@ -20,11 +20,30 @@
       installCRDs: true
       prometheus.servicemonitor.enabled: true
 
-- name: Create cluster issuer
+- name: Create cluster issuer (staging)
   kubernetes.core.k8s:
     state: present
     definition:
-      apiVersion: cert-manager.io/v1alpha2
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-staging
+      spec:
+        acme:
+          email: me@ass.af
+          server: https://acme-staging-v02.api.letsencrypt.org/directory
+          privateKeySecretRef:
+            name: letsencrypt-staging
+          solvers:
+            - http01:
+                ingress:
+                  class: traefik
+
+- name: Create cluster issuer (prod)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
       kind: ClusterIssuer
       metadata:
         name: letsencrypt-prod
@@ -79,9 +98,6 @@
     create_namespace: yes
     chart_ref: grafana/grafana
     values:
-      service:
-        type: LoadBalancer
-        port: 3000
       persistence:
         enabled: true
         storageClassName: local-path
@@ -91,22 +107,10 @@
           enabled: true
           annotations:
             kubernetes.io/ingress.class: traefik
-            cert-manager.io/cluster-issuer: "letsencrypt-prod"
+            cert-manager.io/cluster-issuer: letsencrypt-prod
           hosts:
-            - grafana.k3s.local
             - k3s.ass.af
           tls:
             - hosts:
-                - grafana.k3s.local
                 - k3s.ass.af
               secretName: grafana-tls
-      dashboards:
-        default:
-          prometheus-stats:
-            gnetId: 2
-            revision: 2
-            datasource: Prometheus
-          kubernetes-cluster:
-            gnetId: 7249
-            revision: 1
-            datasource: Prometheus

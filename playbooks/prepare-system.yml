@@ -44,7 +44,6 @@
           - avahi
           - base-devel
           - dialog
-          - docker
           - git
           - go
           - htop
