@@ -41,5 +41,5 @@ systemd_dir: /etc/systemd/system
 
 master_name: "{{ groups['k3s_rpi_master'][0] }}"
 master_ip: "{{ hostvars[master_name].ansible_host }}"
-extra_server_args: "--tls-san k3s.ass.af --bind-address {{ master_ip }} --write-kubeconfig-mode 600"
+extra_server_args: "--tls-san k3s.ass.af --bind-address {{ master_ip }} --write-kubeconfig-mode 600 --cluster-init"
 extra_agent_args: ""
